@@ -2,11 +2,13 @@ package bot
 
 import (
 	"context"
+	"fmt"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"go.uber.org/zap"
 
 	"github.com/IMB-a/swap2p-tg/pkg/processor"
+	"github.com/IMB-a/swap2p-tg/pkg/swap2p"
 	"github.com/IMB-a/swap2p-tg/pkg/types"
 )
 
@@ -16,20 +18,15 @@ type Handler interface {
 	HandleUpdate(tgbotapi.Update) (tgbotapi.MessageConfig, error)
 }
 
-type swap2pAPI interface {
-	SetUserWallet(ctx context.Context, id types.ChatID) error
-	IsUserWalletPresents(ctx context.Context, id types.ChatID) (bool, error)
-}
-
 type Bot struct {
 	token   string
-	swapAPI swap2pAPI
+	swapAPI *swap2p.Client
 	botAPI  *tgbotapi.BotAPI
 	pr      *processor.Processor
 	logger  *zap.Logger
 }
 
-func NewBot(token string, swapAPI swap2pAPI, pr *processor.Processor, logger *zap.Logger) (*Bot, error) {
+func NewBot(token string, swapAPI *swap2p.Client, pr *processor.Processor, logger *zap.Logger) (*Bot, error) {
 	botapi, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		return nil, err
@@ -60,23 +57,27 @@ func (b *Bot) ListenForUpdates() error {
 }
 
 func (b *Bot) handleUpdate(ctx context.Context, update *tgbotapi.Update) error {
-	var msg tgbotapi.MessageConfig
+	var msg []tgbotapi.MessageConfig
 
 	chat := update.FromChat()
 	chatID := types.ChatID(chat.ID)
-	ok, err := b.swapAPI.IsUserWalletPresents(ctx, chatID)
+	data, err := b.swapAPI.GetDataByChatID(ctx, chatID)
 	if err != nil {
+		b.logger.Sugar().Error(err.Error())
 		msg = b.pr.ReplyError(update.Message)
+		_, err = b.botAPI.Send(msg[0])
+		return err
 	}
-	if !ok {
-		msg = b.pr.ReplyNoAddressError(update.Message)
+	fmt.Printf("%+v", data)
+
+	switch {
+	case update.Message != nil:
+		msg = b.pr.Reply(ctx, update.Message, data.GetSessionState())
+	case update.CallbackQuery != nil:
+		msg = b.pr.ReplyQuery(ctx, update.CallbackQuery, data.GetSessionState())
 	}
-
-	if update.Message != nil {
-		msg = b.pr.Reply(ctx, update.Message)
+	for _, m := range msg {
+		_, err = b.botAPI.Send(m)
 	}
-
-	_, err = b.botAPI.Send(msg)
-
 	return err
 }

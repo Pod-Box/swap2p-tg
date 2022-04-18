@@ -2,75 +2,138 @@ package processor
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
 	"github.com/IMB-a/swap2p-tg/pkg/replies"
+	"github.com/IMB-a/swap2p-tg/pkg/swap2p"
 	"github.com/IMB-a/swap2p-tg/pkg/types"
 )
 
-type swap2pAPI interface {
-	SetUserWallet(ctx context.Context, id types.ChatID) error
-}
-
 type Processor struct {
-	api swap2pAPI
+	api *swap2p.Client
 }
 
-func NewProcessor(api swap2pAPI) *Processor {
+func NewProcessor(api *swap2p.Client) *Processor {
 	return &Processor{
 		api: api,
 	}
 }
 
-func (p *Processor) Reply(ctx context.Context, inMsg *tgbotapi.Message) tgbotapi.MessageConfig {
+func (p *Processor) Reply(ctx context.Context, inMsg *tgbotapi.Message, userState types.UserState) (msg []tgbotapi.MessageConfig) {
 	chatID := types.ChatID(inMsg.Chat.ID)
-	r := tgbotapi.NewMessage(int64(chatID), "")
-	var replyData *replies.ReplyData
-
-	if cmd := inMsg.Command(); cmd != "" {
-		switch types.Command(cmd) {
-		case types.Start:
-			replyData = replies.GetStartCommandReplyData()
-		case types.Help:
-		case types.Settings:
-		case types.SetAddress:
-			if p.IsEVMAddress(inMsg.CommandArguments()) {
-				if err := p.api.SetUserWallet(ctx, chatID); err != nil {
-					return p.ReplyError(inMsg)
-				}
-				replyData = replies.GetSuccessAddressSetReplyData()
+	msg = []tgbotapi.MessageConfig{}
+	fmt.Println(userState)
+	switch userState.State {
+	case types.StateNew:
+		if userState.Step == "" {
+			userState.Step = types.SecondStep
+			if err := p.api.SetUserState(ctx, userState); err != nil {
+				msg = append(msg, buildMessageFromReply(chatID, replies.GetErrorReplyData()))
+				return msg
 			}
+			msg = append(msg, buildMessageFromReply(chatID, replies.GetStartCommandReplyData()))
+			return msg
 		}
+		if !p.IsEVMAddress(inMsg.Text) {
+			msg = append(msg, buildMessageFromReply(chatID, replies.GetErrorReplyData()))
+			return msg
+		}
+		userState.State = types.StateDefault
+		userState.Step = ""
+		if err := p.api.SetUserState(ctx, userState); err != nil {
+			msg = append(msg, buildMessageFromReply(chatID, replies.GetErrorReplyData()))
+			return msg
+		}
+		if err := p.api.SetUserWallet(ctx, chatID, inMsg.Text); err != nil {
+			msg = append(msg, buildMessageFromReply(chatID, replies.GetErrorReplyData()))
+			return msg
+		}
+		msg = append(msg, buildMessageFromReply(chatID, replies.GetSuccessAddressSetReplyData()))
+	case types.StateCreateSwap:
+
+	case types.StateAcceptSwap:
+
+	case types.StateDefault:
+		msg = p.processButton(ctx, inMsg)
 	}
-	if replyData != nil {
-		r.Text = replyData.GetText()
-		r.ReplyMarkup = replyData.GetMarkup()
-		r.ParseMode = "HTML"
-	}
-	return r
+
+	return msg
 }
-func (p *Processor) ReplyError(inMsg *tgbotapi.Message) tgbotapi.MessageConfig {
-	r := tgbotapi.NewMessage(inMsg.Chat.ID, "")
+
+func (p *Processor) processButton(ctx context.Context, inMsg *tgbotapi.Message) (msg []tgbotapi.MessageConfig) {
+	chatID := types.ChatID(inMsg.Chat.ID)
+	msg = []tgbotapi.MessageConfig{}
+
+	switch types.ButtonText(inMsg.Text) {
+	case types.MyAccountButton:
+		data, err := p.api.GetDataByChatID(ctx, chatID)
+		if err != nil {
+			msg = append(msg, buildMessageFromReply(chatID, replies.GetErrorReplyData()))
+			return msg
+		}
+		msg = append(msg, buildMessageFromReply(chatID, replies.GetUserInfoReplyData(data)))
+	case types.BrowseTradesButton:
+		trades, err := p.api.GetAllTrades(ctx)
+		if err != nil {
+			msg = append(msg, buildMessageFromReply(chatID, replies.GetErrorReplyData()))
+			return msg
+		}
+		for _, trade := range trades.Trades {
+			msg = append(msg, buildMessageFromReply(chatID, replies.GetTradeReplyData(trade)))
+		}
+	case types.CreateTradeButton:
+	}
+
+	return msg
+}
+
+func (p *Processor) ReplyQuery(
+	ctx context.Context,
+	inQuery *tgbotapi.CallbackQuery,
+	userState types.UserState,
+) (msg []tgbotapi.MessageConfig) {
+	//	chatID := types.ChatID(inQuery.From.ID)
+
+	switch userState.State {
+
+	case types.StateDefault:
+
+	case types.StateCreateSwap:
+
+	case types.StateAcceptSwap:
+
+	}
+
+	return
+}
+
+func buildMessageFromReply(chatID types.ChatID, r *replies.ReplyData) tgbotapi.MessageConfig {
+	msg := tgbotapi.NewMessage(int64(chatID), "")
+	msg.ParseMode = "HTML"
+	msg.ReplyMarkup = r.GetMarkup()
+	msg.Text = r.GetText()
+	return msg
+}
+
+func (p *Processor) ReplyError(inMsg *tgbotapi.Message) []tgbotapi.MessageConfig {
+	msg := tgbotapi.NewMessage(inMsg.Chat.ID, "")
 
 	replyData := replies.GetErrorReplyData()
-	r.Text = replyData.GetText()
+	msg.Text = replyData.GetText()
 
-	return r
+	return []tgbotapi.MessageConfig{msg}
 }
 
-func (p *Processor) ReplyNoAddressError(inMsg *tgbotapi.Message) tgbotapi.MessageConfig {
-	r := tgbotapi.NewMessage(inMsg.Chat.ID, "")
+func (p *Processor) ReplyNoAddressError(inMsg *tgbotapi.Message) []tgbotapi.MessageConfig {
+	msg := tgbotapi.NewMessage(inMsg.Chat.ID, "")
 
-	replyData := replies.GetErrorReplyData()
-	r.Text = replyData.GetText()
+	replyData := replies.GetAddressErrorReplyData()
+	msg.Text = replyData.GetText()
 
-	return r
-}
-
-func (p *Processor) ProcessRegistration() tgbotapi.MessageConfig {
-	return tgbotapi.MessageConfig{}
+	return []tgbotapi.MessageConfig{msg}
 }
 
 func (p *Processor) IsEVMAddress(address string) bool {

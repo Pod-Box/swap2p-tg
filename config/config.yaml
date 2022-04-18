@@ -1,4 +1,10 @@
+token: ""
+
 swap2p:
   port: ""
   host: ""
   path: "sss"
+  getDataPath: "get_data"
+  setWalletPath: "set_wallet"
+  setUserStatePath: "user_state"
+  allTradesPath: "all_trades"

@@ -14,14 +14,15 @@ const defaultCfgPath = "./config/"
 
 func main() {
 	cfg, err := config.ReadConfig(defaultCfgPath)
-	swapAPI := swap2p.NewClient(&cfg.Swap2p)
-	proc := processor.NewProcessor(swapAPI)
-
 	logger, _ := zap.NewProduction()
 	if err != nil {
 		log.Fatal(err)
 	}
-	tgbot, err := bot.NewBot("5315388754:AAHlJlEGmJwhAw9HGOt1RJuMLadwB4SacUk", swapAPI, proc, logger)
+	logger.Sugar().Infof("%+v", cfg)
+	swapAPI := swap2p.NewClient(&cfg.Swap2p, logger)
+	proc := processor.NewProcessor(swapAPI)
+
+	tgbot, err := bot.NewBot(cfg.Token, swapAPI, proc, logger)
 	if err != nil {
 		log.Fatal(err)
 	}
