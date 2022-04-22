@@ -34,7 +34,7 @@ func (p *Processor) Reply(ctx context.Context, inMsg *tgbotapi.Message, data *ap
 
 	if inMsg.Command() == string(types.Cancel) {
 		if data.WalletAddress == "" {
-			msg = append(msg, buildMessageFromReply(chatID, replies.GetErrorReplyData("DOLBOEB VVEDI ADDRESS")))
+			msg = append(msg, buildMessageFromReply(chatID, replies.GetErrorReplyData("Please, provide address")))
 			return msg, err
 		}
 		if err := p.api.SetUserState(ctx, chatID, types.StateDefault); err != nil {

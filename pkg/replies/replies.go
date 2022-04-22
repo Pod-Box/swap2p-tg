@@ -43,7 +43,7 @@ func GetStartCommandReplyData() *ReplyData {
 func GetErrorReplyData(info ...string) *ReplyData {
 	text := ("Oops, something went wrong ☹. Please, try again")
 	if len(info) != 0 {
-		text = fmt.Sprintf("Oops, something went wrong ☹. Please, try again.%+v", info[0])
+		text = fmt.Sprintf("Oops, something went wrong ☹ \nError: %+v", info[0])
 	}
 	return &ReplyData{
 		text: text,
