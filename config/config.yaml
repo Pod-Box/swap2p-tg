@@ -1,10 +1,5 @@
-token: ""
+token: "5315388754:AAEv5XnY2b5yGgdwYSFUThTnxSQ-O-Ymapo"
 
 swap2p:
-  port: ""
-  host: ""
-  path: "sss"
-  getDataPath: "get_data"
-  setWalletPath: "set_wallet"
-  setUserStatePath: "user_state"
-  allTradesPath: "all_trades"
+  host: "https://edb0-90-154-70-150.eu.ngrok.io/api"
+  redirectHost: "https://metamask.app.link/dapp/d731-46-31-25-181.eu.ngrok.io/trade"

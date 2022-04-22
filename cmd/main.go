@@ -3,10 +3,11 @@ package main
 import (
 	"log"
 
-	"github.com/IMB-a/swap2p-tg/config"
-	"github.com/IMB-a/swap2p-tg/pkg/bot"
-	"github.com/IMB-a/swap2p-tg/pkg/processor"
-	"github.com/IMB-a/swap2p-tg/pkg/swap2p"
+	"github.com/Pod-Box/swap2p-backend/api"
+	"github.com/Pod-Box/swap2p-tg/config"
+	"github.com/Pod-Box/swap2p-tg/pkg/bot"
+	"github.com/Pod-Box/swap2p-tg/pkg/processor"
+	"github.com/Pod-Box/swap2p-tg/pkg/swap2p"
 	"go.uber.org/zap"
 )
 
@@ -19,7 +20,11 @@ func main() {
 		log.Fatal(err)
 	}
 	logger.Sugar().Infof("%+v", cfg)
-	swapAPI := swap2p.NewClient(&cfg.Swap2p, logger)
+	apiClient, err := api.NewClientWithResponses(cfg.Swap2p.GetHost())
+	if err != nil {
+		log.Fatal(err)
+	}
+	swapAPI := swap2p.NewClient(&cfg.Swap2p, logger, apiClient)
 	proc := processor.NewProcessor(swapAPI)
 
 	tgbot, err := bot.NewBot(cfg.Token, swapAPI, proc, logger)

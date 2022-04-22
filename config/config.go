@@ -8,13 +8,8 @@ type Config struct {
 }
 
 type Swap2p struct {
-	Port             string `yaml:"port"`
-	Host             string `yaml:"host"`
-	Path             string `yaml:"path"`
-	GetDataPath      string `yaml:"get_data_path"`
-	SetWalletPath    string `yaml:"set_wallet_path"`
-	SetUserStatePath string `yaml:"set_user_state_path"`
-	AllTradesPath    string `yaml:"all_trades_path"`
+	Host         string `yaml:"host"`
+	RedirectHost string `yaml:"redirectHost"`
 }
 
 func ReadConfig(path string) (*Config, error) {
@@ -34,19 +29,10 @@ func ReadConfig(path string) (*Config, error) {
 	return cfg, nil
 }
 
-func (s *Swap2p) GetPath() string {
-	return s.Path
+func (s *Swap2p) GetHost() string {
+	return s.Host
 }
 
-func (s *Swap2p) GetDataByChatIDPath() string {
-	return s.GetDataPath
-}
-func (s *Swap2p) GetSetWalletPath() string {
-	return s.SetWalletPath
-}
-func (s *Swap2p) GetSetUserStatePath() string {
-	return s.SetUserStatePath
-}
-func (s *Swap2p) GetAllTradesPath() string {
-	return s.AllTradesPath
+func (s *Swap2p) GetRedirectHost() string {
+	return s.RedirectHost
 }

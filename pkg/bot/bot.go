@@ -7,9 +7,9 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"go.uber.org/zap"
 
-	"github.com/IMB-a/swap2p-tg/pkg/processor"
-	"github.com/IMB-a/swap2p-tg/pkg/swap2p"
-	"github.com/IMB-a/swap2p-tg/pkg/types"
+	"github.com/Pod-Box/swap2p-tg/pkg/processor"
+	"github.com/Pod-Box/swap2p-tg/pkg/swap2p"
+	"github.com/Pod-Box/swap2p-tg/pkg/types"
 )
 
 const BotUpdateTimeout = 60
@@ -60,21 +60,33 @@ func (b *Bot) handleUpdate(ctx context.Context, update *tgbotapi.Update) error {
 	var msg []tgbotapi.MessageConfig
 
 	chat := update.FromChat()
+	if chat == nil {
+		return fmt.Errorf("wtf")
+	}
 	chatID := types.ChatID(chat.ID)
-	data, err := b.swapAPI.GetDataByChatID(ctx, chatID)
+	data, err := b.swapAPI.InitUserData(ctx, chatID)
 	if err != nil {
 		b.logger.Sugar().Error(err.Error())
 		msg = b.pr.ReplyError(update.Message)
 		_, err = b.botAPI.Send(msg[0])
 		return err
 	}
-	fmt.Printf("%+v", data)
+	if data == nil {
+		b.logger.Sugar().Error("no data was found")
+		msg = b.pr.ReplyError(update.Message)
+		_, err = b.botAPI.Send(msg[0])
+		return err
+	}
+	b.logger.Sugar().Infof("USER_DATA:%+v", data)
 
 	switch {
 	case update.Message != nil:
-		msg = b.pr.Reply(ctx, update.Message, data.GetSessionState())
+		msg, err = b.pr.Reply(ctx, update.Message, data)
+		if err != nil {
+			b.logger.Sugar().Error(err.Error())
+		}
 	case update.CallbackQuery != nil:
-		msg = b.pr.ReplyQuery(ctx, update.CallbackQuery, data.GetSessionState())
+		msg = b.pr.ReplyQuery(ctx, update.CallbackQuery, data)
 	}
 	for _, m := range msg {
 		_, err = b.botAPI.Send(m)
