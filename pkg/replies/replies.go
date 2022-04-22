@@ -53,9 +53,7 @@ func GetErrorReplyData(info ...string) *ReplyData {
 func GetAcceptOfferReplyData(data string, host string) *ReplyData {
 	data = strings.TrimPrefix(data, "accept-trade-")
 	urlAPI, _ := url.Parse(host)
-	q := urlAPI.Query()
-	q.Add("escrowIndex", data)
-	urlAPI.RawQuery = q.Encode()
+	urlAPI.Path += "/" + data
 
 	return &ReplyData{
 		text: "Click this button to accept this trade!",
@@ -137,7 +135,9 @@ func GetUserInfoReplyData(data *api.PersonalData) *ReplyData {
 
 func GetTradeReplyData(trade api.Trade) *ReplyData {
 	xAm, _ := decimal.NewFromString(string(trade.XAmount))
-	yAm, _ := decimal.NewFromString(string(trade.XAmount))
+	xAm = xAm.Shift(int32(-trade.XDecimals))
+	yAm, _ := decimal.NewFromString(string(trade.YAmount))
+	yAm = yAm.Shift(int32(-trade.YDecimals))
 	shortedXAsset := trade.XAsset[0:4] + "..." + trade.XAsset[len(trade.XAsset)-4:len(trade.XAddress)]
 	shortedYAsset := trade.YAsset[0:4] + "..." + trade.YAsset[len(trade.YAsset)-4:len(trade.YAddress)]
 

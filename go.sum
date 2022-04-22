@@ -69,6 +69,8 @@ github.com/Pod-Box/swap2p-backend v0.0.0-20220421225040-027e34ed30df h1:Nc8iqbzt
 github.com/Pod-Box/swap2p-backend v0.0.0-20220421225040-027e34ed30df/go.mod h1:OrtpMpVGbh2UG5ysW/P3t0G9j9bPWP9riAyI9AXo/JY=
 github.com/Pod-Box/swap2p-backend v0.0.0-20220422135445-9737056e63ba h1:C+OSy1wY3CmaUXiBe5QAwPF9WAoFmaDCs2FMxIjMRaI=
 github.com/Pod-Box/swap2p-backend v0.0.0-20220422135445-9737056e63ba/go.mod h1:mURP6l43sWjX1CmFxUuWWYnsgdIMHSkaM/+EyOfeHR8=
+github.com/Pod-Box/swap2p-backend v0.0.0-20220422183314-5b01fce4d3fa h1:l2oatR5GEcwdKmkgWEcHTN5IW0ZtM8eE9jQAs/5/og4=
+github.com/Pod-Box/swap2p-backend v0.0.0-20220422183314-5b01fce4d3fa/go.mod h1:mURP6l43sWjX1CmFxUuWWYnsgdIMHSkaM/+EyOfeHR8=
 github.com/aead/siphash v1.0.1/go.mod h1:Nywa3cDsYNNK3gaciGTWPwHt0wlpNV15vwmswBAUSII=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=

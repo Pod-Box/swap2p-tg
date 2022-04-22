@@ -115,12 +115,14 @@ func (c *Client) SetUserState(ctx context.Context, id types.ChatID, userState ty
 }
 
 func (c *Client) GetAllTrades(ctx context.Context) (*api.TradeList, error) {
-	offset, limit := api.QOffset(0), api.QLimit(1000)
+	offset, limit, closed := api.QOffset(0), api.QLimit(1000), api.QTradeClosed(false)
+
 	resp, err := c.c.GetAllTradesWithResponse(
 		ctx,
 		&api.GetAllTradesParams{
-			Offset: &offset,
-			Limit:  &limit,
+			Offset:      &offset,
+			Limit:       &limit,
+			TradeClosed: &closed,
 		},
 	)
 	if err != nil || resp.StatusCode() != http.StatusOK {
