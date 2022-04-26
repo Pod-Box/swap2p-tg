@@ -164,7 +164,7 @@ func (p *Processor) processButton(ctx context.Context, inMsg *tgbotapi.Message, 
 			return msg
 		}
 		for _, trade := range *trades {
-			msg = append(msg, buildMessageFromReply(chatID, replies.GetTradeReplyData(trade)))
+			msg = append(msg, buildMessageFromReply(chatID, replies.GetTradeReplyData(trade, p.api.Cfg.RedirectHost)))
 		}
 	case types.CreateTradeButton:
 		if len(data.Balance) == 0 {
@@ -237,8 +237,6 @@ func (p *Processor) ReplyQuery(
 			msg = append(msg, buildMessageFromReply(chatID, replies.GetCreatedReplyData(p.m[chatID], p.api.Cfg.GetRedirectHost())))
 		case string(types.ButtonText(types.DeclineCreateButton)):
 			msg = append(msg, buildMessageFromReply(chatID, replies.GetCancelledReplyData()))
-		default:
-			msg = append(msg, buildMessageFromReply(chatID, replies.GetAcceptOfferReplyData(inQuery.Data, p.api.Cfg.GetRedirectHost())))
 		}
 		return msg
 	case types.StateCreateTradeFinished:

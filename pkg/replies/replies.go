@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
-	"strings"
-	"time"
+
+	"github.com/enescakir/emoji"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/shopspring/decimal"
 
 	"github.com/Pod-Box/swap2p-backend/api"
 	"github.com/Pod-Box/swap2p-tg/pkg/types"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/shopspring/decimal"
 )
 
 type ReplyData struct {
@@ -47,21 +47,6 @@ func GetErrorReplyData(info ...string) *ReplyData {
 	}
 	return &ReplyData{
 		text: text,
-	}
-}
-
-func GetAcceptOfferReplyData(data string, host string) *ReplyData {
-	data = strings.TrimPrefix(data, "accept-trade-")
-	urlAPI, _ := url.Parse(host)
-	urlAPI.Path += "/" + data
-
-	return &ReplyData{
-		text: "Click this button to accept this trade!",
-		markup: tgbotapi.NewInlineKeyboardMarkup(
-			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonURL("Go to 🦊", urlAPI.String()),
-			),
-		),
 	}
 }
 
@@ -133,20 +118,22 @@ func GetUserInfoReplyData(data *api.PersonalData) *ReplyData {
 	}
 }
 
-func GetTradeReplyData(trade api.Trade) *ReplyData {
+func GetTradeReplyData(trade api.Trade, host string) *ReplyData {
 	xAm, _ := decimal.NewFromString(string(trade.XAmount))
 	xAm = xAm.Shift(int32(-trade.XDecimals))
 	yAm, _ := decimal.NewFromString(string(trade.YAmount))
 	yAm = yAm.Shift(int32(-trade.YDecimals))
-	shortedXAsset := trade.XAsset[0:4] + "..." + trade.XAsset[len(trade.XAsset)-4:len(trade.XAddress)]
-	shortedYAsset := trade.YAsset[0:4] + "..." + trade.YAsset[len(trade.YAsset)-4:len(trade.YAddress)]
+	shortedXAsset := formatCheckVerificatedAsset(trade.XAsset)
+	shortedYAsset := formatCheckVerificatedAsset(trade.YAsset)
+	urlAPI, _ := url.Parse(host)
+	urlAPI.Path += "/" + strconv.Itoa(trade.Id)
 
 	return &ReplyData{
-		text: fmt.Sprintf("Offer: <strong>%v of %v</strong> for <strong>%v of %v</strong>, expires: %v\n",
-			xAm, shortedXAsset, yAm, shortedYAsset, time.Now().Format(time.RFC822)),
+		text: fmt.Sprintf("<strong>%v%v\n%v</strong>\n%v\n<strong>%v%v\n%v</strong>\n",
+			xAm, emoji.Coin, shortedXAsset, emoji.DownArrow, yAm, emoji.Coin, shortedYAsset),
 		markup: tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData("Accept trade", "accept-trade-"+strconv.Itoa(trade.Id)),
+				tgbotapi.NewInlineKeyboardButtonURL("Accept trade", urlAPI.String()),
 			),
 		),
 	}
@@ -208,4 +195,19 @@ func formatBigInt(n string, decimals int64) string {
 	amount, _ := decimal.NewFromString(n)
 	amount = amount.Shift(-int32(decimals))
 	return amount.String()
+}
+
+func formatCheckVerificatedAsset(asset string) string {
+	formatted := asset[0:4] + "..." + asset[len(asset)-4:]
+	if v, ok := verifiedMap[asset]; ok {
+		formatted = fmt.Sprintf("%v%v", v, emoji.CheckMarkButton)
+	} else {
+		formatted = fmt.Sprintf("%v%v", emoji.ThinkingFace, formatted)
+	}
+	return formatted
+}
+
+var verifiedMap = map[string]string{
+	"0xcbA65c05C2e1E76251d2ab0C0A6E4714BA1dF607": "TokenX",
+	"0xDB7c3A8574d3a1E8B78cbF9499c01535606Bd459": "TokenY",
 }
