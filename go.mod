@@ -9,7 +9,7 @@ require (
 )
 
 require (
-	github.com/Pod-Box/swap2p-backend v0.0.0-20220422183314-5b01fce4d3fa // indirect
+	github.com/Pod-Box/swap2p-backend v0.0.0-20220428234614-9e27c2479865 // indirect
 	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/deepmap/oapi-codegen v1.10.1 // indirect
 	github.com/enescakir/emoji v1.0.0 // indirect

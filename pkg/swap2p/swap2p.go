@@ -130,5 +130,18 @@ func (c *Client) GetAllTrades(ctx context.Context) (*api.TradeList, error) {
 	}
 	trades := resp.JSON200
 	c.logger.Sugar().Warnf("%+v", trades)
-	return trades, nil
+	return &trades.Trades, nil
+}
+
+func (c *Client) AddToken(ctx context.Context, tokenAddress string) error {
+	resp, err := c.c.AddAssetWithResponse(
+		ctx,
+		&api.AddAssetParams{
+			Asset: api.QAssetAddress(tokenAddress),
+		},
+	)
+	if err != nil || resp.StatusCode() != http.StatusOK {
+		return err
+	}
+	return nil
 }

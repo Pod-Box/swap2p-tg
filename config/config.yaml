@@ -2,4 +2,4 @@ token: ""
 
 swap2p:
   host: "https://swap2p.online/api"
-  redirectHost: "https://metamask.app.link/dapp/swap2p.online/trade"
+  redirectHost: "https://metamask.app.link/dapp/fc4d-46-31-25-181.eu.ngrok.io/trade"
